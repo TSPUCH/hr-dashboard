@@ -98,3 +98,9 @@ def setup_database():
         print("Please ensure the /data folder exists and the CSV file is inside it.")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
+        
+#--------------------------------------------------------------------------#
+# 4. SCRIPT EXECUTION
+#--------------------------------------------------------------------------#
+if __name__ == '__main__':
+    setup_database()
