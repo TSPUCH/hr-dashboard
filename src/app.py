@@ -58,3 +58,18 @@ except Exception as e:
     st.error(f"Failed to load data from '{DB_PATH}': {e}")
     st.info("Please ensure you have run 'python src/setup_database.py' to create the database.")
     st.stop()
+
+#--------------------------------------------------------------------------#
+# 5. SIDEBAR LAYOUT
+#--------------------------------------------------------------------------#
+if os.path.exists(LOGO_PATH):
+    st.sidebar.image(LOGO_PATH, use_container_width=True)
+else:
+    st.sidebar.info("Add a 'logo.png' to the /images folder to display it here.")
+
+st.sidebar.header("Dashboard Filters & Actions")
+
+department = st.sidebar.selectbox(
+    "Select a Department:",
+    options=['All'] + sorted(df['Department'].unique().tolist())
+)
