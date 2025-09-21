@@ -29,3 +29,22 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+#--------------------------------------------------------------------------#
+# 3. DATABASE UTILITY FUNCTIONS
+#--------------------------------------------------------------------------#
+def get_connection():
+    """Establishes and returns a connection to the SQLite database."""
+    return sqlite3.connect(DB_PATH)
+
+def run_query(query, params=None):
+    """Runs a SQL SELECT query and returns the result as a DataFrame."""
+    with get_connection() as conn:
+        return pd.read_sql_query(query, conn, params=params)
+
+def execute_query(query, params=None):
+    """Executes a non-select SQL query (INSERT, UPDATE)."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(query, params or [])
+        conn.commit()
