@@ -73,3 +73,36 @@ department = st.sidebar.selectbox(
     "Select a Department:",
     options=['All'] + sorted(df['Department'].unique().tolist())
 )
+
+df_filtered = df[df['Department'] == department] if department != 'All' else df.copy()
+
+# --- Form: Add New Employee ---
+with st.sidebar.form("new_employee_form", clear_on_submit=True):
+    st.subheader("Add New Employee")
+    new_id = st.number_input("Employee ID", min_value=df['EmployeeID'].max() + 1, step=1)
+    new_dept = st.selectbox("Department", options=sorted(df['Department'].unique().tolist()))
+    
+    # NEW: Added more fields to create a complete, valid employee record.
+    new_job_role = st.selectbox("Job Role", options=sorted(df['JobRole'].unique().tolist()))
+    new_perf_rating = st.selectbox("Performance Rating", options=[1, 2, 3, 4])
+    new_overtime = st.selectbox("OverTime", options=['Yes', 'No'])
+    
+    new_income = st.number_input("Monthly Income", min_value=1000, step=100)
+
+    if st.form_submit_button("Add Employee"):
+        try:
+            # NEW: Updated INSERT query to include all the new fields.
+            # This prevents creating rows with NULL values that can break charts.
+            query = """
+                INSERT INTO employees 
+                (EmployeeID, Department, JobRole, PerformanceRating, OverTime, MonthlyIncome, Attrition) 
+                VALUES (?, ?, ?, ?, ?, ?, 'No')
+            """
+            params = (new_id, new_dept, new_job_role, new_perf_rating, new_overtime, new_income)
+            execute_query(query, params)
+            st.sidebar.success(f"Employee {new_id} added successfully!")
+            st.rerun()
+        except sqlite3.IntegrityError:
+             st.sidebar.error(f"Employee ID {new_id} already exists.")
+        except Exception as e:
+            st.sidebar.error(f"An error occurred: {e}")
