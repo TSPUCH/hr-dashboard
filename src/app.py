@@ -122,3 +122,20 @@ with st.sidebar.form("update_income_form", clear_on_submit=True):
             st.rerun()
         except Exception as e:
             st.sidebar.error(f"Failed to update income: {e}")
+
+#--------------------------------------------------------------------------#
+# 6. MAIN DASHBOARD LAYOUT
+#--------------------------------------------------------------------------#
+st.title(f"📊 HR Analytics Dashboard: {department}")
+
+# --- KPIs ---
+total_employees = df_filtered.shape[0]
+avg_income = int(df_filtered['MonthlyIncome'].mean())
+attrition_rate = (df_filtered[df_filtered['Attrition'] == 'Yes'].shape[0] / total_employees * 100) if total_employees > 0 else 0
+
+kpi1, kpi2, kpi3 = st.columns(3)
+kpi1.metric(label="Total Employees", value=total_employees)
+kpi2.metric(label="Average Monthly Income", value=f"${avg_income:,}")
+kpi3.metric(label="Attrition Rate", value=f"{attrition_rate:.2f}%")
+
+st.markdown("---")
