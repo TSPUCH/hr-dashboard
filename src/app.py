@@ -48,3 +48,13 @@ def execute_query(query, params=None):
         cursor = conn.cursor()
         cursor.execute(query, params or [])
         conn.commit()
+
+#--------------------------------------------------------------------------#
+# 4. DATA LOADING AND INITIAL FILTERING
+#--------------------------------------------------------------------------#
+try:
+    df = run_query("SELECT * FROM employees")
+except Exception as e:
+    st.error(f"Failed to load data from '{DB_PATH}': {e}")
+    st.info("Please ensure you have run 'python src/setup_database.py' to create the database.")
+    st.stop()
