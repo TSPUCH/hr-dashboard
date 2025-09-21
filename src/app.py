@@ -139,3 +139,76 @@ kpi2.metric(label="Average Monthly Income", value=f"${avg_income:,}")
 kpi3.metric(label="Attrition Rate", value=f"{attrition_rate:.2f}%")
 
 st.markdown("---")
+
+# --- Tabs for organization ---
+tab1, tab2, tab3 = st.tabs(["Department Overview", "Attrition Deep Dive", "Employee Details"])
+
+# --- TAB 1: Department Overview ---
+with tab1:
+    st.header("Department Overview")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("Employee Count by Job Role")
+        # Ensure 'JobRole' exists and is not null before processing
+        if 'JobRole' in df_filtered.columns:
+            role_counts = df_filtered['JobRole'].value_counts().reset_index()
+            fig_bar = px.bar(role_counts, x='count', y='JobRole', orientation='h', color_discrete_sequence=['#4F008C'])
+            st.plotly_chart(fig_bar, use_container_width=True)
+    with col2:
+        st.subheader("Performance Rating Distribution")
+        # Ensure 'PerformanceRating' exists and is not null before processing
+        if 'PerformanceRating' in df_filtered.columns:
+            perf_counts = df_filtered['PerformanceRating'].value_counts().reset_index()
+            fig_perf = px.bar(perf_counts, x='PerformanceRating', y='count', color_discrete_sequence=['#FF375E'])
+            st.plotly_chart(fig_perf, use_container_width=True)
+
+# --- TAB 2: Attrition Deep Dive ---
+with tab2:
+    st.header("Attrition Deep Dive")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("Overall Attrition Breakdown")
+        attrition_counts = df_filtered['Attrition'].value_counts().reset_index()
+        fig_pie = px.pie(attrition_counts, names='Attrition', values='count', hole=0.4,
+                         color='Attrition', color_discrete_map={'Yes': '#FF375E', 'No': '#4F008C'})
+        st.plotly_chart(fig_pie, use_container_width=True)
+    with col2:
+        st.subheader("Attrition Rate by Overtime")
+        # Ensure 'OverTime' exists and is not null before processing
+        if 'OverTime' in df_filtered.columns:
+            overtime_attrition = df_filtered.groupby('OverTime')['Attrition'].value_counts(normalize=True).unstack().fillna(0)
+            if 'Yes' in overtime_attrition.columns:
+                overtime_attrition_df = (overtime_attrition['Yes'] * 100).reset_index()
+                fig_overtime = px.bar(overtime_attrition_df, x='OverTime', y='Yes',
+                                      labels={'Yes': 'Attrition Rate (%)'}, color_discrete_sequence=['#FF375E'])
+                st.plotly_chart(fig_overtime, use_container_width=True)
+
+    # --- ADVANCED SQL: Using a Common Table Expression (CTE) ---
+    st.subheader("Are We Losing Our Top Performers?")
+    cte_query = """
+        WITH PerfAttrition AS (
+            SELECT PerformanceRating, Attrition, COUNT(EmployeeID) as Count
+            FROM employees
+            WHERE (:dept = 'All' OR Department = :dept)
+            AND PerformanceRating IS NOT NULL
+            GROUP BY PerformanceRating, Attrition
+        )
+        SELECT * FROM PerfAttrition;
+    """
+    params = {"dept": department}
+    perf_attrition_df = run_query(cte_query, params=params)
+
+    if not perf_attrition_df.empty:
+        fig_perf_attr = px.bar(
+            perf_attrition_df, x='PerformanceRating', y='Count', color='Attrition',
+            title='Attrition Count by Performance Rating', barmode='group',
+            color_discrete_map={'Yes': '#FF375E', 'No': '#4F008C'}
+        )
+        st.plotly_chart(fig_perf_attr, use_container_width=True)
+
+# --- TAB 3: Employee Details ---
+with tab3:
+    st.header("Employee Details")
+    display_columns = ['EmployeeID', 'Age', 'Department', 'JobRole', 'MonthlyIncome', 'PerformanceRating', 'YearsAtCompany', 'Attrition', 'OverTime']
+    st.dataframe(df_filtered[display_columns], use_container_width=True)
+
