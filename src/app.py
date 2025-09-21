@@ -106,3 +106,19 @@ with st.sidebar.form("new_employee_form", clear_on_submit=True):
              st.sidebar.error(f"Employee ID {new_id} already exists.")
         except Exception as e:
             st.sidebar.error(f"An error occurred: {e}")
+
+# --- Form: Update Employee Income ---
+with st.sidebar.form("update_income_form", clear_on_submit=True):
+    st.subheader("Update Employee Income")
+    emp_to_update = st.selectbox("Select Employee ID", options=sorted(df['EmployeeID'].unique().tolist()))
+    new_monthly_income = st.number_input("New Monthly Income", min_value=1000, step=100)
+
+    if st.form_submit_button("Update Income"):
+        try:
+            query = "UPDATE employees SET MonthlyIncome = ? WHERE EmployeeID = ?"
+            params = (new_monthly_income, emp_to_update)
+            execute_query(query, params)
+            st.sidebar.success(f"Income for Employee ID {emp_to_update} updated!")
+            st.rerun()
+        except Exception as e:
+            st.sidebar.error(f"Failed to update income: {e}")
