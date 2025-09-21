@@ -42,3 +42,59 @@ def clean_col_names(df):
             new_cols.append(new_col)
     df.columns = new_cols
     return df
+
+#--------------------------------------------------------------------------#
+# 3. MAIN DATABASE SETUP FUNCTION
+#--------------------------------------------------------------------------#
+def setup_database():
+    """
+    Main function to read, clean, and load data into a new SQLite database.
+    """
+    try:
+        # --- Task 1: Load Data ---
+        print(f"Loading data from '{CSV_FILE_PATH}'...")
+        df = pd.read_csv(CSV_FILE_PATH)
+        print("Data loaded successfully.")
+
+        # --- Task 2: Data Cleaning and Preparation ---
+        if 'EmployeeID' not in df.columns:
+            df.insert(0, 'EmployeeID', range(1, 1 + len(df)))
+
+        # FIX: Handle missing Department values at the source.
+        # We drop rows where 'Department' is NaN, as they are not useful for analysis.
+        initial_rows = len(df)
+        df.dropna(subset=['Department'], inplace=True)
+        rows_dropped = initial_rows - len(df)
+        if rows_dropped > 0:
+            print(f"Data Cleaning: Removed {rows_dropped} rows with missing Department information.")
+
+        if 'YearsAtCompany' in df.columns and df['YearsAtCompany'].isnull().any():
+            median_years = df['YearsAtCompany'].median()
+            df['YearsAtCompany'].fillna(median_years, inplace=True)
+            print(f"Data Cleaning: Missing 'YearsAtCompany' values filled with median value: {median_years}")
+
+        df = clean_col_names(df)
+        print("Column names cleaned.")
+
+        # --- Task 3: Create Database and Insert Data ---
+        os.makedirs(DATA_DIR, exist_ok=True)
+        engine = create_engine(f'sqlite:///{DB_FILE_PATH}')
+        print(f"Connecting to database at '{DB_FILE_PATH}'...")
+
+        df.to_sql(TABLE_NAME, engine, if_exists='replace', index=False)
+        print(f"Data successfully inserted into '{TABLE_NAME}' table.")
+
+        # --- Task 4: Verification ---
+        conn = sqlite3.connect(DB_FILE_PATH)
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT COUNT(*) FROM {TABLE_NAME}")
+        count = cursor.fetchone()[0]
+        conn.close()
+        print(f"Verification: Found {count} records in '{TABLE_NAME}' table.")
+        print("\nDatabase setup is complete! You can now run the main application.")
+
+    except FileNotFoundError:
+        print(f"Error: The file '{CSV_FILE_PATH}' was not found.")
+        print("Please ensure the /data folder exists and the CSV file is inside it.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
