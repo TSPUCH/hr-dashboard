@@ -28,3 +28,17 @@ DATA_DIR = os.path.join(BASE_DIR, "..", "data")
 CSV_FILE_PATH = os.path.join(DATA_DIR, 'WA_Fn-UseC_-HR-Employee-Attrition.csv')
 DB_FILE_PATH = os.path.join(DATA_DIR, 'hr_database.db')
 TABLE_NAME = 'employees'
+
+#--------------------------------------------------------------------------#
+# 2. HELPER FUNCTION FOR CLEANING
+#--------------------------------------------------------------------------#
+def clean_col_names(df):
+    """Cleans the column names of a pandas DataFrame to be safe for a database."""
+    cols = df.columns
+    new_cols = []
+    for col in cols:
+        new_col = re.sub(r'[^0-9a-zA-Z_]', '', col)
+        if new_col:
+            new_cols.append(new_col)
+    df.columns = new_cols
+    return df
